@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "euaiact"
+version = "0.1.0"
+description = "Zero-dependency Python SDK to parse and navigate the EU AI Act (Regulation (EU) 2024/1689)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Aziz Amari" }]
+keywords = ["eu ai act", "legal", "regulation", "compliance", "legaltech", "nlp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Legal Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+dependencies = []  # stdlib only — intentionally dependency-free
+
+[project.urls]
+Homepage = "https://github.com/azizamari/euaiact"
+Repository = "https://github.com/azizamari/euaiact"
+Issues = "https://github.com/azizamari/euaiact/issues"
+Changelog = "https://github.com/azizamari/euaiact/blob/main/CHANGELOG.md"
+"Source text (EUR-Lex)" = "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+
+[project.scripts]
+euaiact = "euaiact.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/euaiact"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/euaiact/data" = "euaiact/data"
