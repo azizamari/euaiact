@@ -115,10 +115,12 @@ act.article(9)                     act.recital(12)        act.citation(3)
 act.chapter("III")                 act.annex(3)           act.annex("III")
 ```
 
-### Lookup by id
+### Lookup by id or citation
 
 ```python
-act.get("art_9.par_2")             # by canonical id, or raw eli id; None if absent
+act.get("art_9.par_2")             # by canonical id; None if absent
+act.get("005.001")                 # by raw EUR-Lex id
+act.get("Article 9(2)")            # by human legal citation
 act["005.001"]                     # __getitem__ (raises KeyError if absent)
 "anx_III" in act                   # membership
 ```

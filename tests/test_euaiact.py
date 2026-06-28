@@ -10,6 +10,7 @@ import json
 import pytest
 
 from euaiact import AIAct, ProvisionType as PT
+from euaiact.__main__ import main
 
 
 @pytest.fixture(scope="module")
@@ -66,6 +67,20 @@ def test_lookup_by_canonical_and_eli_id(act):
     assert act.get("art_5.par_1") is act["005.001"]      # canonical vs raw eli id
     assert "anx_III" in act
     assert act.get("does_not_exist") is None
+
+
+def test_lookup_by_legal_citation(act):
+    assert act.get("Article 5") is act.article(5)
+    assert act.get("Article 5(1)").id == "art_5.par_1"
+    assert act.get("Article 5(1)(a)").id == "art_5.par_1.pt_a"
+    assert act.get("Article 5(1), point (a)").id == "art_5.par_1.pt_a"
+    assert act.get("Article 5(1), point (h)(i)").id == "art_5.par_1.pt_h.pt_i"
+    assert act.get("Article 3, point (1)").id == "art_3.pt_1"
+    assert act.get("Recital 12").id == "rct_12"
+    assert act.get("Annex III").id == "anx_III"
+    assert act.get("Annex III, point 1(a)").id == "anx_III.pt_1.pt_a"
+    assert act.get("Chapter III, Section 1").id == "cpt_III.sct_1"
+    assert act.get("Banana 99") is None
 
 
 def test_annex_accepts_roman_or_int(act):
@@ -150,3 +165,13 @@ def test_stats(act):
     s = act.stats()
     assert s["article"] == 113
     assert s["footnote"] == 58
+
+
+# --------------------------------------------------------------------------- #
+# CLI
+# --------------------------------------------------------------------------- #
+def test_cli_show_accepts_citation_like_id(capsys):
+    assert main(["show", "Article 5(1)(a)"]) == 0
+    captured = capsys.readouterr()
+    assert "subliminal techniques" in captured.out
+    assert not captured.err
