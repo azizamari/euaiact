@@ -201,6 +201,25 @@ Validated against the consolidated 2024/1689 text (asserted by the test suite):
 | definitions (Art 3)   | 68    |
 | high-risk areas (Annex III) | 8 |
 
+## Roadmap
+
+Planned next steps (contributions welcome):
+
+- **Multilingual support** — the Act is published in all 24 official EU
+  languages. Load any language version (e.g. `AIAct.load(lang="fr")`) by
+  bundling/fetching the corresponding EUR-Lex HTML. The structural parser is
+  language-agnostic (it keys on EUR-Lex ids/classes), so the provision tree comes
+  for free; reference-phrase extraction would gain per-language patterns.
+- **Previous revisions** — support consolidated versions and amendments over
+  time: point-in-time loading and diffs between versions, addressed by EUR-Lex
+  CELEX / consolidation identifiers.
+- **Richer annex structure** — annexes are already parsed to point level; model
+  their internal sub-sections / group headings (e.g. the lettered sections of
+  Annex VII) as first-class nodes.
+
+Ideas and contributions welcome — open an
+[issue](https://github.com/azizamari/euaiact/issues).
+
 ## Development
 
 ```bash
