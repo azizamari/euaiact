@@ -42,6 +42,5 @@ euaiact = "euaiact.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/euaiact"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"src/euaiact/data" = "euaiact/data"
+# The bundled Act HTML lives under src/euaiact/data and is included automatically
+# as package data (no force-include needed — that caused a duplicate-path error).

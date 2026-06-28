@@ -40,11 +40,17 @@ print(act.article(9).paragraph(2).full_text())
 
 ## Installation
 
+Install directly from GitHub:
+
 ```bash
-pip install euaiact          # (PyPI release pending)
-# or from source:
 pip install git+https://github.com/azizamari/euaiact
-# or local clone:
+```
+
+Or from a local clone:
+
+```bash
+git clone https://github.com/azizamari/euaiact
+cd euaiact
 pip install -e .
 ```
 
