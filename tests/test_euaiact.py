@@ -175,3 +175,61 @@ def test_cli_show_accepts_citation_like_id(capsys):
     captured = capsys.readouterr()
     assert "subliminal techniques" in captured.out
     assert not captured.err
+
+
+def test_cli_stats_prints_counts(capsys):
+    assert main(["stats"]) == 0
+    captured = capsys.readouterr()
+    assert "   article: 113" in captured.out
+    assert "  footnote: 58" in captured.out
+    assert not captured.err
+
+
+def test_cli_search_prints_matches(capsys):
+    assert main(["search", "subliminal techniques"]) == 0
+    captured = capsys.readouterr()
+    assert "art_5.par_1.pt_a" in captured.out
+    assert "Article 5(1), point (a)" in captured.out
+    assert "match(es)." in captured.err
+
+
+def test_cli_search_filters_by_type(capsys):
+    assert main(["search", "human oversight", "--subtree", "--type", "article"]) == 0
+    captured = capsys.readouterr()
+    lines = [line for line in captured.out.splitlines() if line.strip()]
+    assert lines
+    assert all(line.startswith("art_") and ".par_" not in line for line in lines)
+    assert "art_14                 Article 14" in lines
+    assert "match(es)." in captured.err
+
+
+def test_cli_search_accepts_multiple_type_filters(capsys):
+    assert main(["search", "subliminal techniques", "--type", "paragraph", "--type", "point"]) == 0
+    captured = capsys.readouterr()
+    assert "art_5.par_1.pt_a" in captured.out
+    assert "Article 5(1), point (a)" in captured.out
+
+
+def test_cli_export_writes_json(tmp_path, capsys):
+    out = tmp_path / "aiact.json"
+
+    assert main(["export", str(out)]) == 0
+
+    captured = capsys.readouterr()
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["regulation"] == "Regulation (EU) 2024/1689"
+    assert data["document"]["id"] == "aiact"
+    assert f"wrote {out}" in captured.err
+
+
+def test_cli_graph_writes_reference_edges(tmp_path, capsys):
+    out = tmp_path / "edges.json"
+
+    assert main(["graph", str(out)]) == 0
+
+    captured = capsys.readouterr()
+    edges = json.loads(out.read_text(encoding="utf-8"))
+    assert len(edges) > 300
+    assert {"source", "target", "kind", "raw"} <= set(edges[0])
+    assert "wrote" in captured.err
+    assert str(out) in captured.err

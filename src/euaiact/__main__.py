@@ -6,6 +6,7 @@ Examples::
     euaiact show art_9                  # print a provision's text
     euaiact show "Article 5(1)(a)"      # also accepts citation-like ids via id
     euaiact search "human oversight"    # full-text search
+    euaiact search "risk" --type article
     euaiact export aiact.json           # whole Act -> JSON
     euaiact graph edges.json            # internal cross-reference graph -> JSON
 """
@@ -17,6 +18,9 @@ import json
 import sys
 
 from .act import AIAct
+from .model import ProvisionType as PT
+
+_SEARCH_TYPE_CHOICES = tuple(t.value for t in PT)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -34,6 +38,13 @@ def main(argv: list[str] | None = None) -> int:
     p_search.add_argument("query")
     p_search.add_argument("--regex", action="store_true")
     p_search.add_argument("--subtree", action="store_true", help="match whole subtree text")
+    p_search.add_argument(
+        "--type",
+        dest="types",
+        action="append",
+        choices=_SEARCH_TYPE_CHOICES,
+        help="limit matches to a provision type; repeat to include multiple types",
+    )
 
     p_export = sub.add_parser("export", help="serialise the whole Act to JSON")
     p_export.add_argument("out")
@@ -54,7 +65,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(prov.full_text(indent=not args.no_indent))
     elif args.cmd == "search":
-        hits = act.search(args.query, regex=args.regex, whole_subtree=args.subtree)
+        types = [PT(t) for t in args.types] if args.types else None
+        hits = act.search(args.query, regex=args.regex, whole_subtree=args.subtree, types=types)
         for p in hits:
             print(f"{p.id:<22} {p.citation}")
         print(f"\n{len(hits)} match(es).", file=sys.stderr)
