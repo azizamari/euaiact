@@ -30,6 +30,9 @@ classifiers = [
 ]
 dependencies = []  # stdlib only — intentionally dependency-free
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [project.urls]
 Homepage = "https://github.com/azizamari/euaiact"
 Repository = "https://github.com/azizamari/euaiact"
