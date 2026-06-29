@@ -231,7 +231,7 @@ Ideas and contributions welcome — open an
 ## Development
 
 ```bash
-pip install -e . pytest
+pip install -e ".[dev]"
 pytest -q
 ```
 

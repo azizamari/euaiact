@@ -9,7 +9,7 @@ contributions that keep it that way are very welcome.
 git clone https://github.com/azizamari/euaiact
 cd euaiact
 python -m venv .venv && source .venv/bin/activate
-pip install -e . pytest
+pip install -e ".[dev]"
 pytest -q
 ```
 
