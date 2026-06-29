@@ -193,6 +193,23 @@ def test_cli_search_prints_matches(capsys):
     assert "match(es)." in captured.err
 
 
+def test_cli_search_filters_by_type(capsys):
+    assert main(["search", "human oversight", "--subtree", "--type", "article"]) == 0
+    captured = capsys.readouterr()
+    lines = [line for line in captured.out.splitlines() if line.strip()]
+    assert lines
+    assert all(line.startswith("art_") and ".par_" not in line for line in lines)
+    assert "art_14                 Article 14" in lines
+    assert "match(es)." in captured.err
+
+
+def test_cli_search_accepts_multiple_type_filters(capsys):
+    assert main(["search", "subliminal techniques", "--type", "paragraph", "--type", "point"]) == 0
+    captured = capsys.readouterr()
+    assert "art_5.par_1.pt_a" in captured.out
+    assert "Article 5(1), point (a)" in captured.out
+
+
 def test_cli_export_writes_json(tmp_path, capsys):
     out = tmp_path / "aiact.json"
 

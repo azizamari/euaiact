@@ -189,6 +189,7 @@ act.stats()                        # {'article': 113, 'recital': 180, ...}
 python -m euaiact stats                 # provision counts
 python -m euaiact show art_9            # print a provision's text
 python -m euaiact search "human oversight"
+python -m euaiact search "human oversight" --type article --subtree
 python -m euaiact export aiact.json     # whole Act → JSON
 python -m euaiact graph edges.json      # internal cross-reference graph → JSON
 ```
