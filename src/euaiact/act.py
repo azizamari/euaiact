@@ -30,11 +30,120 @@ _DATA_FILE = Path(__file__).parent / "data" / "eu_ai_act_2024_1689_en.html"
 
 RomanOrInt = Union[str, int]
 
+_ARTICLE_CITATION_RE = re.compile(r"^Article\s+(?P<num>\d+)(?P<tail>.*)$", re.I)
+_RECITAL_CITATION_RE = re.compile(r"^Recital\s+(?P<num>\d+)$", re.I)
+_PREAMBLE_CITATION_RE = re.compile(r"^Citation\s+(?P<num>\d+)$", re.I)
+_CHAPTER_CITATION_RE = re.compile(r"^Chapter\s+(?P<num>[IVXLCDM]+|\d+)(?P<tail>.*)$", re.I)
+_ANNEX_CITATION_RE = re.compile(r"^Annex\s+(?P<num>[IVXLCDM]+|\d+)(?P<tail>.*)$", re.I)
+_SECTION_TAIL_RE = re.compile(r"^,?\s*Section\s+(?P<num>\d+)$", re.I)
+_PAREN_MARKER_RE = re.compile(r"\(([A-Za-z0-9]+)\)")
+
 
 def _roman(value: RomanOrInt) -> str:
     if isinstance(value, int):
         return int_to_roman(value)
     return value.strip().upper()
+
+
+def _normalise_lookup(text: str) -> str:
+    text = text.replace("\xa0", " ").replace(" ", " ")
+    return re.sub(r"\s+", " ", text).strip().rstrip(".;")
+
+
+def _citation_number_to_roman(value: str) -> str:
+    if value.isdigit():
+        return int_to_roman(int(value))
+    return value.upper()
+
+
+def _parse_point_markers(tail: str) -> Optional[list[str]]:
+    tail = tail.strip()
+    tail = re.sub(r"^,?\s*points?\s*", "", tail, flags=re.I).strip()
+    if not tail:
+        return []
+
+    markers: list[str] = []
+    if not tail.startswith("("):
+        m = re.match(r"([A-Za-z0-9]+)", tail)
+        if not m:
+            return None
+        markers.append(m.group(1))
+        tail = tail[m.end():]
+
+    pos = 0
+    while pos < len(tail):
+        if tail[pos].isspace():
+            pos += 1
+            continue
+        m = _PAREN_MARKER_RE.match(tail, pos)
+        if not m:
+            return None
+        markers.append(m.group(1))
+        pos = m.end()
+    return markers
+
+
+def _append_points(base: str, markers: list[str]) -> str:
+    for marker in markers:
+        base = f"{base}.pt_{marker.lower()}"
+    return base
+
+
+def _citation_to_id(text: str) -> Optional[str]:
+    """Translate common legal citations to canonical provision ids.
+
+    This is intentionally narrow: it accepts familiar user-facing forms such as
+    ``Article 5(1)(a)`` and ``Annex III, point 1(a)``. Existence is still checked
+    by ``AIAct.get`` after translation, so unknown provisions do not become hits.
+    """
+    text = _normalise_lookup(text)
+
+    m = _RECITAL_CITATION_RE.match(text)
+    if m:
+        return f"rct_{int(m.group('num'))}"
+
+    m = _PREAMBLE_CITATION_RE.match(text)
+    if m:
+        return f"cit_{int(m.group('num'))}"
+
+    m = _CHAPTER_CITATION_RE.match(text)
+    if m:
+        pid = f"cpt_{_citation_number_to_roman(m.group('num'))}"
+        tail = m.group("tail").strip()
+        if not tail:
+            return pid
+        sm = _SECTION_TAIL_RE.match(tail)
+        if sm:
+            return f"{pid}.sct_{int(sm.group('num'))}"
+        return None
+
+    m = _ANNEX_CITATION_RE.match(text)
+    if m:
+        pid = f"anx_{_citation_number_to_roman(m.group('num'))}"
+        tail = m.group("tail").strip()
+        if not tail:
+            return pid
+        markers = _parse_point_markers(tail)
+        return _append_points(pid, markers) if markers else None
+
+    m = _ARTICLE_CITATION_RE.match(text)
+    if not m:
+        return None
+
+    pid = f"art_{int(m.group('num'))}"
+    tail = m.group("tail").strip()
+    if not tail:
+        return pid
+
+    par = _PAREN_MARKER_RE.match(tail)
+    if par and par.group(1).isdigit():
+        pid = f"{pid}.par_{int(par.group(1))}"
+        tail = tail[par.end():].strip()
+        if not tail:
+            return pid
+
+    markers = _parse_point_markers(tail)
+    return _append_points(pid, markers) if markers else None
 
 
 class AIAct:
@@ -115,8 +224,12 @@ class AIAct:
         return self._require(f"anx_{rom}", f"Annex {number}")
 
     def get(self, provision_id: str) -> Optional[Provision]:
-        """Look up a provision by canonical id, or raw EUR-Lex (eli) id."""
-        return self._by_id.get(provision_id) or self._by_eli.get(provision_id)
+        """Look up a provision by canonical id, raw EUR-Lex id, or legal citation."""
+        found = self._by_id.get(provision_id) or self._by_eli.get(provision_id)
+        if found is not None:
+            return found
+        citation_id = _citation_to_id(provision_id)
+        return self._by_id.get(citation_id or "")
 
     def __getitem__(self, provision_id: str) -> Provision:
         p = self.get(provision_id)
